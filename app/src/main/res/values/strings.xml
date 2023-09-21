@@ -1,0 +1,18 @@
+<resources>
+    <!-- General Strings -->
+    <string name="app_name" translatable="false">ABIK</string>
+    <string name="nothing_to_remove">Working dir is already clean</string>
+    <string name="select_path_to_remove">Select what to clean: </string>
+    <string name="extract_img_button">Extract Image</string>
+    <string name="build_img_button">Build</string>
+    <string name="clear_button">Clean</string>
+    <string name="decompress_ramdisk_switch">Decompress Ramdisk</string>
+    <string name="working_dir">Working dir: %1$s</string>
+    <string name="input_file_error">Failed to open input file!</string>
+    <string name="no_projects">No projects to be built!</string>
+    <string name="cleaning_title">Cleaning: %1$s</string>
+    <string name="deleting_title">Deleting: %1$s</string>
+    <string name="deleting_items">Deleting selected items…</string>
+    <string name="disable_dont_keep_activities">Please disable \"Don\'t keep activities\" in Developer Options.</string>
+    <string name="app_running">ABIK is currently working. Please wait.</string>
+</resources>
