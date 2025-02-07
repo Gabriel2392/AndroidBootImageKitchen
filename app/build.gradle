@@ -12,9 +12,9 @@ android {
         minSdk 24
         //noinspection OldTargetApi
         targetSdk 35
-        versionCode 50
-        versionName "0.5.0-preview"
-        ndkVersion "28.0.12916984"
+        versionCode 100
+        versionName "1.0.0-beta"
+        ndkVersion "28.0.13004108"
 
         externalNativeBuild {
             cmake {
@@ -28,14 +28,6 @@ android {
         prefab true
     }
 
-    signingConfigs {
-        release {
-            v1SigningEnabled false
-            v2SigningEnabled true
-            enableV3Signing true
-        }
-    }
-
     buildTypes {
         release {
             minifyEnabled true
@@ -44,7 +36,6 @@ android {
             renderscriptDebuggable false
             jniDebuggable false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
         }
     }
     externalNativeBuild {
