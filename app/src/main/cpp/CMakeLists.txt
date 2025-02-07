@@ -1,12 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 
-#set(CMAKE_CXX_VISIBILITY_PRESET hidden)
-#set(CMAKE_C_VISIBILITY_PRESET hidden)
-
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-rtti -g0 -O3 -fvisibility=default")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fno-rtti -g0 -O3 -fvisibility=default")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-rtti -g0 -O3 ")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fno-rtti -g0 -O3")
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
-add_compile_definitions(_FILE_OFFSET_BITS=64)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/liblz4)

@@ -19,7 +19,7 @@ android {
         externalNativeBuild {
             cmake {
                 arguments "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
-                cppFlags "-std=c++23"
+                cppFlags "-std=c++23 -fstack-protector-all -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -fvisibility=hidden"
             }
         }
     }
