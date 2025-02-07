@@ -28,6 +28,13 @@ android {
         prefab true
     }
 
+    signingConfigs {
+        config {
+            enableV3Signing = true
+            enableV4Signing = true
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled true
@@ -36,6 +43,7 @@ android {
             renderscriptDebuggable false
             jniDebuggable false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            buildTypes { release { signingConfig signingConfigs.config } }
         }
     }
     externalNativeBuild {
