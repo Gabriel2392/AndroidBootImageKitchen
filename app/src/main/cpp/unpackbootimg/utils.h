@@ -6,6 +6,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+
 #include "tools.h"
 
 namespace utils {
@@ -41,8 +42,7 @@ std::vector<uint8_t> ReadNBytesAtOffsetX(int fd, off_t offset, size_t numBytes);
 template <size_t N>
 bool ReadU32Array(int fd, std::array<uint32_t, N> &arr) {
   for (auto &val : arr) {
-    if (!ReadU32(fd, val))
-      return false;
+    if (!ReadU32(fd, val)) return false;
   }
   return true;
 }
@@ -56,4 +56,4 @@ struct ImageEntry {
       : offset(o), size(s), name(std::move(n)) {}
 };
 
-} // namespace utils
+}  // namespace utils

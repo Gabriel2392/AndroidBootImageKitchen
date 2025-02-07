@@ -1,4 +1,5 @@
 #include "vendorbootimg.h"
+
 #include <fstream>
 
 namespace {
@@ -10,13 +11,14 @@ constexpr uint32_t VENDOR_BOOT_IMAGE_HEADER_V3_SIZE = 2112;
 constexpr uint32_t VENDOR_BOOT_IMAGE_HEADER_V4_SIZE = 2128;
 constexpr uint32_t VENDOR_BOOT_ARGS_SIZE = 2048;
 constexpr uint32_t VENDOR_BOOT_NAME_SIZE = 16;
-} // namespace
+}  // namespace
 
 bool VendorBootBuilder::Build() {
   std::ofstream out(args.output, std::ios::binary);
   if (!out) {
-      LOGE("Failed to open %s for writing", fs::path(args.output).filename().c_str());
-      return false;
+    LOGE("Failed to open %s for writing",
+         fs::path(args.output).filename().c_str());
+    return false;
   }
 
   LOG("Building to: %s", fs::path(args.output).filename().c_str());
@@ -38,10 +40,8 @@ bool VendorBootBuilder::Build() {
     ramdisk_total_size = utils::GetFileSize(args.vendor_ramdisk);
   }
 
-  if (!WriteHeader(out))
-    return false;
-  if (!WriteRamdisks(out))
-    return false;
+  if (!WriteHeader(out)) return false;
+  if (!WriteRamdisks(out)) return false;
 
   if (auto dtb = utils::OpenFile(args.dtb)) {
     auto data = utils::ReadFileContents(*dtb);
@@ -50,8 +50,7 @@ bool VendorBootBuilder::Build() {
   }
 
   if (args.header_version > 3) {
-    if (!WriteTableEntries(out))
-      return false;
+    if (!WriteTableEntries(out)) return false;
 
     if (auto bc = utils::OpenFile(args.bootconfig)) {
       auto data = utils::ReadFileContents(*bc);
@@ -71,7 +70,8 @@ bool VendorBootBuilder::WriteHeader(std::ostream &out) {
   utils::WriteU32(out, args.base + args.ramdisk_offset);
   utils::WriteU32(out, static_cast<uint32_t>(ramdisk_total_size));
 
-  std::vector<char> cmdline(args.vendor_cmdline.begin(), args.vendor_cmdline.end());
+  std::vector<char> cmdline(args.vendor_cmdline.begin(),
+                            args.vendor_cmdline.end());
   cmdline.resize(VENDOR_BOOT_ARGS_SIZE, 0);
   out.write(cmdline.data(), cmdline.size());
 
@@ -81,7 +81,9 @@ bool VendorBootBuilder::WriteHeader(std::ostream &out) {
   board.resize(VENDOR_BOOT_NAME_SIZE, 0);
   out.write(board.data(), board.size());
 
-  const uint32_t header_size = args.header_version > 3 ? VENDOR_BOOT_IMAGE_HEADER_V4_SIZE : VENDOR_BOOT_IMAGE_HEADER_V3_SIZE;
+  const uint32_t header_size = args.header_version > 3
+                                   ? VENDOR_BOOT_IMAGE_HEADER_V4_SIZE
+                                   : VENDOR_BOOT_IMAGE_HEADER_V3_SIZE;
   utils::WriteU32(out, header_size);
   utils::WriteU32(out, utils::GetFileSize(args.dtb));
   utils::WriteU64(out, args.base + args.dtb_offset);
@@ -127,7 +129,8 @@ bool VendorBootBuilder::WriteTableEntries(std::ostream &out) {
 
     std::vector<char> name(VENDOR_RAMDISK_NAME_SIZE, 0);
     std::copy_n(entry.name.begin(),
-                std::min(entry.name.size(), static_cast<size_t>(VENDOR_RAMDISK_NAME_SIZE - 1)),
+                std::min(entry.name.size(),
+                         static_cast<size_t>(VENDOR_RAMDISK_NAME_SIZE - 1)),
                 name.begin());
     out.write(name.data(), name.size());
 

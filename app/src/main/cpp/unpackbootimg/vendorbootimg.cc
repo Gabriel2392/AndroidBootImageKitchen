@@ -1,19 +1,21 @@
 #include "vendorbootimg.h"
-#include "utils.h"
+
+#include <unistd.h>
+
 #include <array>
 #include <sstream>
-#include <unistd.h>
+
 #include "log.h"
 #include "tools.h"
+#include "utils.h"
 #include "vendorbootconfig.h"
 
 namespace {
 constexpr uint32_t VENDOR_RAMDISK_NAME_SIZE = 32;
 }
 
-std::optional<VendorBootImageInfo>
-UnpackVendorBootImage(int fd,
-                      const std::filesystem::path &output_dir, bool dec_ramdisk) {
+std::optional<VendorBootImageInfo> UnpackVendorBootImage(
+    int fd, const std::filesystem::path &output_dir, bool dec_ramdisk) {
   VendorBootImageInfo info;
 
   LOG("Working at: %s", output_dir.c_str());
@@ -36,7 +38,8 @@ UnpackVendorBootImage(int fd,
 
   LOG("Header version: %d", info.header_version);
   LOG("Page size: %d", info.page_size);
-  LOG("Ramdisk(s) total size: %.2fMB", static_cast<float>(info.vendor_ramdisk_size) / 1024 / 1024);
+  LOG("Ramdisk(s) total size: %.2fMB",
+      static_cast<float>(info.vendor_ramdisk_size) / 1024 / 1024);
   LOG("Board: %s", info.product_name.c_str());
   LOG("Cmdline length: %d", info.cmdline.length());
   LOG("DTB size: %.2fMB", static_cast<float>(info.dtb_size) / 1024 / 1024);
@@ -69,20 +72,19 @@ UnpackVendorBootImage(int fd,
     const uint32_t table_pages =
         GetNumberOfPages(info.vendor_ramdisk_table_size, page_size);
     const uint64_t table_offset =
-        page_size *
-        (num_header_pages +
-         GetNumberOfPages(info.vendor_ramdisk_size, page_size) +
-         GetNumberOfPages(info.dtb_size, page_size));
+        page_size * (num_header_pages +
+                     GetNumberOfPages(info.vendor_ramdisk_size, page_size) +
+                     GetNumberOfPages(info.dtb_size, page_size));
 
     for (uint32_t i = 0; i < info.vendor_ramdisk_table_entry_num; ++i) {
       const uint64_t entry_offset =
           table_offset + (info.vendor_ramdisk_table_entry_size * i);
       if (lseek64(fd, static_cast<int64_t>(entry_offset), SEEK_SET) == -1) {
-          LOGE("Error seeking in file");
-          return std::nullopt;
+        LOGE("Error seeking in file");
+        return std::nullopt;
       }
 
-        VendorRamdiskTableEntry entry;
+      VendorRamdiskTableEntry entry;
       if (!(utils::ReadU32(fd, entry.size) &&
             utils::ReadU32(fd, entry.offset) &&
             utils::ReadU32(fd, entry.type) &&
@@ -97,12 +99,13 @@ UnpackVendorBootImage(int fd,
       entry.ramdisk_compression = FORMAT_OTHER;
 
       if (dec_ramdisk) {
-          auto buf = utils::ReadNBytesAtOffsetX(fd, ramdisk_offset_base + entry.offset, 16);
-          if (buf.empty()) {
-              LOGE("Could not read %s", entry.output_name.c_str());
-              return std::nullopt;
-          }
-          entry.ramdisk_compression = getHeaderFormat(buf.data(), buf.size());
+        auto buf = utils::ReadNBytesAtOffsetX(
+            fd, ramdisk_offset_base + entry.offset, 16);
+        if (buf.empty()) {
+          LOGE("Could not read %s", entry.output_name.c_str());
+          return std::nullopt;
+        }
+        entry.ramdisk_compression = getHeaderFormat(buf.data(), buf.size());
       }
 
       image_entries.emplace_back(ramdisk_offset_base + entry.offset, entry.size,
@@ -114,10 +117,9 @@ UnpackVendorBootImage(int fd,
 
     // Handle bootconfig
     const uint64_t bootconfig_offset =
-        page_size *
-        (num_header_pages +
-         GetNumberOfPages(info.vendor_ramdisk_size, page_size) +
-         GetNumberOfPages(info.dtb_size, page_size) + table_pages);
+        page_size * (num_header_pages +
+                     GetNumberOfPages(info.vendor_ramdisk_size, page_size) +
+                     GetNumberOfPages(info.dtb_size, page_size) + table_pages);
     image_entries.emplace_back(bootconfig_offset, info.vendor_bootconfig_size,
                                "bootconfig");
   } else {
@@ -128,9 +130,8 @@ UnpackVendorBootImage(int fd,
   // Handle DTB
   if (info.dtb_size > 0) {
     const uint64_t dtb_offset =
-        page_size *
-        (num_header_pages +
-         GetNumberOfPages(info.vendor_ramdisk_size, page_size));
+        page_size * (num_header_pages +
+                     GetNumberOfPages(info.vendor_ramdisk_size, page_size));
     image_entries.emplace_back(dtb_offset, info.dtb_size, "dtb");
   }
 

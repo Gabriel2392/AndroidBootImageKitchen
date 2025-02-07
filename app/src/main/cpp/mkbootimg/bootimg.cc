@@ -1,10 +1,12 @@
 #include "bootimg.h"
-#include "TinySHA1.hpp"
-#include "utils.h"
+
 #include <array>
 #include <format>
 #include <fstream>
 #include <regex>
+
+#include "TinySHA1.hpp"
+#include "utils.h"
 
 namespace {
 constexpr uint32_t BOOT_MAGIC_SIZE = 8;
@@ -35,7 +37,7 @@ bool WriteHeaderV3Plus(std::ostream &out, const BootImageArgs &args) {
 
   utils::WriteU32(out, (os_version.version << 11) | os_version.patch_level);
   utils::WriteU32(out, header_size);
-  utils::WriteU32(out, 0); // reserved
+  utils::WriteU32(out, 0);  // reserved
   utils::WriteU32(out, 0);
   utils::WriteU32(out, 0);
   utils::WriteU32(out, 0);
@@ -46,7 +48,7 @@ bool WriteHeaderV3Plus(std::ostream &out, const BootImageArgs &args) {
   out.write(cmdline.data(), cmdline.size());
 
   if (args.header_version >= 4) {
-    utils::WriteU32(out, 0); // boot_signature_size
+    utils::WriteU32(out, 0);  // boot_signature_size
   }
 
   utils::PadFile(out, BOOT_IMAGE_HEADER_V3_PAGESIZE);
@@ -81,8 +83,7 @@ bool WriteLegacyHeader(std::ostream &out, const BootImageArgs &args) {
   utils::OSVersion os_version = args.os_version;
   utils::OSVersion::Parse(os_version);
 
-  utils::WriteU32(out, (os_version.version << 11) |
-                           os_version.patch_level);
+  utils::WriteU32(out, (os_version.version << 11) | os_version.patch_level);
 
   std::vector<char> board(BOOT_NAME_SIZE, 0);
   std::copy_n(
@@ -124,10 +125,8 @@ bool WriteLegacyHeader(std::ostream &out, const BootImageArgs &args) {
   update_sha(args.kernel);
   update_sha(args.ramdisk);
   update_sha(args.second);
-  if (args.header_version > 0)
-    update_sha(args.recovery_dtbo);
-  if (args.header_version > 1)
-    update_sha(args.dtb);
+  if (args.header_version > 0) update_sha(args.recovery_dtbo);
+  if (args.header_version > 1) update_sha(args.dtb);
 
   uint32_t digest[5];
   sha.getDigest(digest);
@@ -180,23 +179,22 @@ bool WriteLegacyHeader(std::ostream &out, const BootImageArgs &args) {
   utils::PadFile(out, args.page_size);
   return true;
 }
-} // namespace
+}  // namespace
 
 bool WriteBootImage(const BootImageArgs &args) {
   std::ofstream out(args.output, std::ios::binary);
   if (!out) {
-      LOGE("Failed to open %s for writing", fs::path(args.output).filename().c_str());
-      return false;
+    LOGE("Failed to open %s for writing",
+         fs::path(args.output).filename().c_str());
+    return false;
   }
 
   LOG("Building to: %s", fs::path(args.output).filename().c_str());
 
   if (args.header_version >= 3) {
-    if (!WriteHeaderV3Plus(out, args))
-      return false;
+    if (!WriteHeaderV3Plus(out, args)) return false;
   } else {
-    if (!WriteLegacyHeader(out, args))
-      return false;
+    if (!WriteLegacyHeader(out, args)) return false;
   }
 
   // Write kernel/ramdisk/second data
@@ -211,21 +209,16 @@ bool WriteBootImage(const BootImageArgs &args) {
     return true;
   };
 
-  if (!write_section(args.kernel))
-    return false;
-  if (!write_section(args.ramdisk))
-    return false;
-  if (!write_section(args.second))
-    return false;
+  if (!write_section(args.kernel)) return false;
+  if (!write_section(args.ramdisk)) return false;
+  if (!write_section(args.second)) return false;
 
   if (args.header_version > 0 && args.header_version < 3) {
-    if (!write_section(args.recovery_dtbo))
-      return false;
+    if (!write_section(args.recovery_dtbo)) return false;
   }
 
   if (args.header_version == 2) {
-    if (!write_section(args.dtb))
-      return false;
+    if (!write_section(args.dtb)) return false;
   }
 
   return true;

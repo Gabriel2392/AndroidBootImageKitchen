@@ -1,12 +1,13 @@
 #pragma once
 
-#include "TinySHA1.hpp"
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <optional>
 #include <string>
 #include <vector>
+
+#include "TinySHA1.hpp"
 #include "tools.h"
 
 namespace utils {
@@ -40,7 +41,7 @@ void PadFile(std::ostream &out, size_t padding);
 class AsciizString {
   size_t max_length;
 
-public:
+ public:
   explicit AsciizString(size_t max_len) : max_length(max_len) {}
   std::optional<std::vector<char>> operator()(const std::string &s) const;
 };
@@ -53,4 +54,4 @@ struct OSVersion {
   static void Parse(OSVersion &version);
 };
 
-} // namespace utils
+}  // namespace utils

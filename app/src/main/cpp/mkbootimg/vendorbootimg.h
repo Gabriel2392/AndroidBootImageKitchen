@@ -1,10 +1,11 @@
 #pragma once
 
-#include "utils.h"
 #include <cstdint>
 #include <filesystem>
 #include <unordered_set>
 #include <vector>
+
+#include "utils.h"
 
 constexpr uint32_t VENDOR_RAMDISK_TYPE_NONE = 0;
 constexpr uint32_t VENDOR_RAMDISK_TYPE_PLATFORM = 1;
@@ -15,7 +16,7 @@ struct VendorRamdiskEntry {
   std::filesystem::path path;
   uint32_t type;
   std::string name;
-  std::array<uint32_t, 16> board_id{}; // Initialize to zero
+  std::array<uint32_t, 16> board_id{};  // Initialize to zero
 };
 
 struct VendorBootArgs {
@@ -39,11 +40,11 @@ class VendorBootBuilder {
   VendorBootArgs args;
   uint64_t ramdisk_total_size = 0;
 
-public:
+ public:
   explicit VendorBootBuilder(VendorBootArgs &&args) : args(std::move(args)) {}
   bool Build();
 
-private:
+ private:
   bool WriteHeader(std::ostream &out);
   bool WriteRamdisks(std::ostream &out);
   bool WriteTableEntries(std::ostream &out);

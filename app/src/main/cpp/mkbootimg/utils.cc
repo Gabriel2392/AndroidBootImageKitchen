@@ -1,4 +1,5 @@
 #include "utils.h"
+
 #include <fstream>
 #include <iomanip>
 #include <regex>
@@ -40,7 +41,7 @@ std::optional<FileWrapper> OpenFile(const std::filesystem::path &path) {
   auto file =
       std::make_unique<std::ifstream>(path, std::ios::binary | std::ios::ate);
   if (!file->good()) {
-      return std::nullopt;
+    return std::nullopt;
   }
 
   size_t size = file->tellg();
@@ -51,16 +52,15 @@ std::optional<FileWrapper> OpenFile(const std::filesystem::path &path) {
 std::vector<uint8_t> ReadFileContents(FileWrapper &file) {
   std::vector<uint8_t> buffer(file.size);
   if (!file.stream->read(reinterpret_cast<char *>(buffer.data()), file.size)) {
-      LOGE("Failed to read stream");
-      return {};
+    LOGE("Failed to read stream");
+    return {};
   }
   return buffer;
 }
 
 size_t GetFileSize(FileWrapper &file) { return file.size; }
 size_t GetFileSize(std::optional<FileWrapper> &file) {
-  if (file)
-    return GetFileSize(*file);
+  if (file) return GetFileSize(*file);
   return 0;
 }
 
@@ -71,17 +71,15 @@ size_t GetFileSize(const std::filesystem::path &path) {
 }
 
 void PadFile(std::ostream &out, size_t padding) {
-  if (padding == 0)
-    return;
+  if (padding == 0) return;
   size_t pos = out.tellp();
   size_t pad = (padding - (pos % padding)) % padding;
   out.write(std::string(pad, '\0').c_str(), pad);
 }
 
-std::optional<std::vector<char>>
-AsciizString::operator()(const std::string &s) const {
-  if (s.size() + 1 > max_length)
-    return std::nullopt;
+std::optional<std::vector<char>> AsciizString::operator()(
+    const std::string &s) const {
+  if (s.size() + 1 > max_length) return std::nullopt;
   std::vector<char> result(s.begin(), s.end());
   result.push_back('\0');
   result.resize(max_length, '\0');
@@ -131,4 +129,4 @@ void OSVersion::Parse(OSVersion &version) {
   }
 }
 
-} // namespace utils
+}  // namespace utils

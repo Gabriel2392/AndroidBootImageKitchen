@@ -1,12 +1,13 @@
 #pragma once
 
-#include "utils.h"
 #include <cstdint>
 #include <filesystem>
 #include <optional>
 #include <ostream>
 #include <string>
 #include <vector>
+
+#include "utils.h"
 
 struct BootImageArgs {
   std::filesystem::path kernel;
@@ -26,7 +27,7 @@ struct BootImageArgs {
   uint32_t page_size = 2048;
   uint32_t header_version = 4;
   std::filesystem::path output;
-  //bool print_id = false;
+  // bool print_id = false;
 };
 
 // std::optional<BootImageArgs> ParseArguments(int argc, char* argv[]);

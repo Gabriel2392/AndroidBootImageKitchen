@@ -1,12 +1,13 @@
 #pragma once
 
-#include "utils.h"
 #include <cstdint>
 #include <filesystem>
 #include <optional>
 #include <string>
 #include <vector>
+
 #include "tools.h"
+#include "utils.h"
 
 struct BootImageInfo {
   std::string boot_magic;
@@ -42,8 +43,8 @@ struct BootImageInfo {
   // Version 4+ fields
   uint32_t boot_signature_size = 0;
 
-  //std::filesystem::path image_dir;
+  // std::filesystem::path image_dir;
 };
 
-std::optional<BootImageInfo>
-UnpackBootImage(int fd, const std::filesystem::path &output_dir, bool dec_ramdisk);
+std::optional<BootImageInfo> UnpackBootImage(
+    int fd, const std::filesystem::path &output_dir, bool dec_ramdisk);
