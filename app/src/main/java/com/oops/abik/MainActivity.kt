@@ -19,6 +19,7 @@ import com.oops.abik.databinding.ActivityMainBinding
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
+    // Some Android 11 TVs behave like Android 10, do not remove legacy launcher yet
     private lateinit var legacyPermissionLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var manageStorageSettingsLauncher: ActivityResultLauncher<Intent>
 
@@ -29,32 +30,12 @@ class MainActivity : AppCompatActivity() {
 
         legacyPermissionLauncher =
             registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-                val readGranted = permissions[Manifest.permission.READ_EXTERNAL_STORAGE] ?: false
-                val writeGranted = permissions[Manifest.permission.WRITE_EXTERNAL_STORAGE] ?: false
-                if (readGranted && writeGranted) {
-                    startCoreIfAllowed()
-                } else {
-                    Toast.makeText(
-                        this,
-                        "Storage permission is required to run the core functionality.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    finishAffinity()
-                }
+                handleLegacyPermissionResult(permissions)
             }
 
         manageStorageSettingsLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-                if (hasAllFilesAccess()) {
-                    startCoreIfAllowed()
-                } else {
-                    Toast.makeText(
-                        this,
-                        "All files access permission is required to run the core functionality.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    finishAffinity()
-                }
+                checkPermissionsAndProceed()
             }
 
         requestAppropriateFileAccessPermission()
@@ -62,64 +43,100 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        checkPermissionsAndProceed()
+    }
+
+    private fun checkPermissionsAndProceed() {
         if (hasAllFilesAccess()) {
             startCoreIfAllowed()
         }
     }
 
     private fun hasAllFilesAccess(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Environment.isExternalStorageManager()
-        } else {
-            val readGranted = ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.READ_EXTERNAL_STORAGE
-            ) == PackageManager.PERMISSION_GRANTED
-            val writeGranted = ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            ) == PackageManager.PERMISSION_GRANTED
-            readGranted && writeGranted
-        }
+        return Environment.isExternalStorageManager() || hasLegacyPermissions()
+    }
+
+    // Some Android 11 TVs behave like Android 10, do not remove yet
+    private fun hasLegacyPermissions(): Boolean {
+        val readGranted = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        ) == PackageManager.PERMISSION_GRANTED
+
+        val writeGranted = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        ) == PackageManager.PERMISSION_GRANTED
+
+        return readGranted && writeGranted
     }
 
     private fun requestAppropriateFileAccessPermission() {
         if (hasAllFilesAccess()) {
             startCoreIfAllowed()
+            return
+        }
+
+        val newPermissionIntent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+            data = Uri.parse("package:$packageName")
+        }
+
+        if (newPermissionIntent.resolveActivity(packageManager) != null) {
+            showNewPermissionDialog(newPermissionIntent)
         } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                AlertDialog.Builder(this)
-                    .setTitle("All Files Access Required")
-                    .setMessage(
-                        "This app requires permission to manage all files. Please allow this " +
-                                "permission in the settings screen that will open next. The app " +
-                                "will be highlighted so you can find it quickly."
-                    )
-                    .setCancelable(false)
-                    .setPositiveButton("Open Settings") { _, _ ->
-                        val intent = Intent(
-                            Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
-                            Uri.parse("package:$packageName")
-                        )
-                        manageStorageSettingsLauncher.launch(intent)
-                    }
-                    .setNegativeButton("Cancel") { _, _ ->
-                        Toast.makeText(
-                            this,
-                            "All files access permission is required.",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        finishAffinity()
-                    }
-                    .show()
-            } else {
-                legacyPermissionLauncher.launch(
-                    arrayOf(
-                        Manifest.permission.READ_EXTERNAL_STORAGE,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE
-                    )
-                )
+            requestLegacyPermissions()
+        }
+    }
+
+    private fun showNewPermissionDialog(intent: Intent) {
+        AlertDialog.Builder(this)
+            .setTitle("All Files Access Required")
+            .setMessage(
+                "This app requires permission to manage all files. Please allow this " +
+                        "permission in the settings screen that will open next. The app " +
+                        "will be highlighted so you can find it quickly."
+            )
+            .setCancelable(false)
+            .setPositiveButton("Open Settings") { _, _ ->
+                try {
+                    manageStorageSettingsLauncher.launch(intent)
+                } catch (e: Exception) {
+                    requestLegacyPermissions()
+                }
             }
+            .setNegativeButton("Cancel") { _, _ ->
+                Toast.makeText(
+                    this,
+                    "All files access permission is required.",
+                    Toast.LENGTH_LONG
+                ).show()
+                finishAffinity()
+            }
+            .show()
+    }
+
+    private fun requestLegacyPermissions() {
+        legacyPermissionLauncher.launch(
+            arrayOf(
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            )
+        )
+    }
+
+    private fun handleLegacyPermissionResult(permissions: Map<String, Boolean>) {
+        val readGranted = permissions[Manifest.permission.READ_EXTERNAL_STORAGE] ?: false
+        val writeGranted = permissions[Manifest.permission.WRITE_EXTERNAL_STORAGE] ?: false
+
+        if (readGranted && writeGranted) {
+            startCoreIfAllowed()
+        } else {
+            Toast.makeText(
+                this,
+                "Storage permission is required to run the core functionality.",
+                Toast.LENGTH_LONG
+            ).show()
+            finishAffinity()
         }
     }
 

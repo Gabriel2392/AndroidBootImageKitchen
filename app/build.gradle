@@ -9,11 +9,11 @@ android {
 
     defaultConfig {
         applicationId "com.oops.abik"
-        minSdk 24
+        minSdk 30
         //noinspection OldTargetApi
         targetSdk 35
         versionCode 100
-        versionName "1.0.0-beta4"
+        versionName "1.0.0-beta5"
         ndkVersion "28.0.13004108"
 
         externalNativeBuild {
