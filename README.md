@@ -15,7 +15,7 @@ ABIK is a powerful Android application that lets you easily unpack and repack An
   
 - **Ramdisk Decompression:**  
   Automatically decompress ramdisks compressed with:  
-  - LZMA  
+  - LZMA  (Repacking might not work on low ram devices)
   - GZIP  
   - LZ4
 
