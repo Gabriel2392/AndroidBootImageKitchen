@@ -84,6 +84,7 @@ bool BuildCPIO(const std::filesystem::path &input,
     if (type == "dir") {
       file_type = S_IFDIR;
       nlink = 2;
+      if (permissions == 0000) permissions = 0755;
     } else if (type == "file") {
       file_type = S_IFREG;
       fs::path file_path = input / path;
@@ -92,10 +93,12 @@ bool BuildCPIO(const std::filesystem::path &input,
         return false;
       }
       filesize = fs::file_size(file_path, ec);
+      if (permissions == 0000) permissions = 0754;
     } else if (type == "symlink") {
       file_type = S_IFLNK;
       target = entry["target"];
       filesize = target.size();
+      if (permissions == 0000) permissions = 0754;
     } else {
       LOGE("Unsupported entry type: ", type.c_str());
       return false;
