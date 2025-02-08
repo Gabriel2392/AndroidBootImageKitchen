@@ -19,8 +19,4 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
--keep public class com.oops.abik.ABIK
--keepclassmembers class com.oops.abik.ABIK {
-    public static android.content.Context getAppContext();
-}
 -keep class com.oops.abik.DataHelper { *; }

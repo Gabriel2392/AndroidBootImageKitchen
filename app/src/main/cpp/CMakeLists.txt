@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.22)
 
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-rtti -g0 -O3 ")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-rtti -g0 -O3")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fno-rtti -g0 -O3")
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
 
@@ -28,12 +28,6 @@ add_library(abik SHARED
         mkbootimg/utils.cc
         mkbootimg/bootimg.cc
         mkbootimg/vendorbootimg.cc
-)
-
-set_target_properties(lz4 PROPERTIES C_VISIBILITY_PRESET default CXX_VISIBILITY_PRESET default)
-
-set(HEADER_FILES
-        liblz4/lz4.h
 )
 
 target_include_directories(abik PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/liblz4)
