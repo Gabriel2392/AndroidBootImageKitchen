@@ -1,6 +1,7 @@
 #pragma once
 #include "../unpackbootimg/bootimg.h"
 #include "log.h"
+#include "config.h"
 
 class BootConfig {
  public:
@@ -91,22 +92,35 @@ class BootConfig {
     os.write(reinterpret_cast<const char*>(&value), sizeof(value));
   }
 
+  static void WriteU16(std::ostream& os, uint16_t value) {
+      os.write(reinterpret_cast<const char*>(&value), sizeof(value));
+  }
+
   static void WriteU32(std::ostream& os, uint32_t value) {
     os.write(reinterpret_cast<const char*>(&value), sizeof(value));
   }
 
   static void WriteU64(std::ostream& os, uint64_t value) {
-    os.write(reinterpret_cast<const char*>(&value), sizeof(value));
+    os.write(reinterpret_cast<const char *>(&value), sizeof(value));
+  }
+
+  template <typename T, typename = std::enable_if_t<std::is_trivially_copyable_v<T>>>
+  static void WriteUnsignedAny(std::ostream& os, T& value) {
+    os.write(reinterpret_cast<const char*>(&value), sizeof(T));
   }
 
   static void WriteString(std::ostream& os, const std::string& s) {
-    auto size = static_cast<uint32_t>(s.size());
-    WriteU32(os, size);
+    auto size = static_cast<string_size>(s.size());
+    WriteUnsignedAny(os, size);
     os.write(s.data(), static_cast<std::streamsize>(size));
   }
 
   static void ReadU8(std::istream& is, uint8_t& value) {
     is.read(reinterpret_cast<char*>(&value), sizeof(value));
+  }
+
+  static void ReadU16(std::istream& is, uint16_t& value) {
+      is.read(reinterpret_cast<char*>(&value), sizeof(value));
   }
 
   static void ReadU32(std::istream& is, uint32_t& value) {
@@ -117,9 +131,14 @@ class BootConfig {
     is.read(reinterpret_cast<char*>(&value), sizeof(value));
   }
 
+  template <typename T, typename = std::enable_if_t<std::is_trivially_copyable_v<T>>>
+  static void ReadUnsignedAny(std::istream& is, T& value) {
+    is.read(reinterpret_cast<char*>(&value), sizeof(T));
+  }
+
   static void ReadString(std::istream& is, std::string& s) {
-    uint32_t size;
-    ReadU32(is, size);
+    string_size size;
+    ReadUnsignedAny(is, size);
     s.resize(size);
     is.read(&s[0], static_cast<std::streamsize>(size));
   }

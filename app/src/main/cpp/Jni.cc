@@ -22,6 +22,7 @@
 #include "unpackbootimg/bootimg.h"
 #include "unpackbootimg/vendorbootimg.h"
 #include "vendorbootconfig.h"
+#include "config.h"
 
 constexpr std::string s_vendor_boot_magic = "VNDRBOOT";
 constexpr std::string s_boot_magic = "ANDROID!";
@@ -169,7 +170,7 @@ bool mkbootimg_wrapper(const std::string &workdir) {
     return false;
   }
 
-  uint32_t str_size = 8;
+  string_size str_size = 8;
   config.read(reinterpret_cast<char *>(&str_size), sizeof(str_size));
   std::vector<uint8_t> magic(str_size);
   config.read(reinterpret_cast<char *>(magic.data()),
