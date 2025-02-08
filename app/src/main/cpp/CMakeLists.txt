@@ -7,17 +7,6 @@ set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/liblz4)
 
-add_library(lz4 STATIC
-        liblz4/lz4.c
-        liblz4/lz4hc.c
-        liblz4/xxhash.c
-        liblz4/lz4frame.c
-        liblz4/lz4file.c
-        liblz4/threadpool.c
-        liblz4/timefn.c
-        liblz4/util.c
-        liblz4/lz4io.c)
-
 add_library(abik SHARED
         Jni.cc
         Log.cc
@@ -29,6 +18,8 @@ add_library(abik SHARED
         mkbootimg/bootimg.cc
         mkbootimg/vendorbootimg.cc
 )
+
+add_subdirectory(liblz4)
 
 add_library(lzma SHARED IMPORTED)
 set_target_properties(
