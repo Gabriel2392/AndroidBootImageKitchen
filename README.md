@@ -21,4 +21,4 @@ ABIK is a powerful Android application that lets you easily unpack and repack An
 
 ## Important Note
 
-The boot image **must** be from a device that was launched with **Android 9 (Pie) or newer**. There are no additional device requirements or root permissions needed to run ABIK.
+This project officially supports only GKI boot images (introduced with Android 11+), but it may also work with boot images from devices launched with Android 9 (Pie) or newer. Additionally, no extra device requirements or root permissions are needed to run ABIK.
