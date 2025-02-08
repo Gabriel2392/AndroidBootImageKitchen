@@ -7,6 +7,8 @@
 #include "lz4io.h"
 #include "zlib.h"
 
+std::error_code d_errorc;
+
 bool DecompressGzipFile(const std::filesystem::path &input,
                         const std::filesystem::path &output) {
   constexpr size_t bufferSize = 8192;
@@ -22,6 +24,7 @@ bool DecompressGzipFile(const std::filesystem::path &input,
   if (!outFile.is_open()) {
     LOGE("gzip: Error opening output file: %s", output.string().c_str());
     gzclose(gzInput);
+    std::filesystem::remove_all(output, d_errorc);
     return false;
   }
 
@@ -32,6 +35,7 @@ bool DecompressGzipFile(const std::filesystem::path &input,
       LOGE("gzip: Error writing to output file: %s", output.string().c_str());
       outFile.close();
       gzclose(gzInput);
+      std::filesystem::remove_all(output, d_errorc);
       return false;
     }
   }
@@ -42,6 +46,7 @@ bool DecompressGzipFile(const std::filesystem::path &input,
     LOGE("gzip: Error during decompression: %s", errorMsg);
     outFile.close();
     gzclose(gzInput);
+    std::filesystem::remove_all(output, d_errorc);
     return false;
   }
 
@@ -71,6 +76,7 @@ bool DecompressLZ4File(const std::filesystem::path &input,
   LZ4IO_freePreferences(prefs);
   if (result != 0) {
     LOGE("LZ4: Error decompressing");
+    std::filesystem::remove_all(output, d_errorc);
     return false;
   }
 
@@ -148,8 +154,7 @@ bool DecompressLZMAFile(const std::filesystem::path &input,
 
     if (ret != LZMA_STREAM_END) {
         outFile.close();
-        std::error_code ec;
-        std::filesystem::remove(output, ec);
+        std::filesystem::remove(output, d_errorc);
         return false;
     }
 
