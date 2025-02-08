@@ -118,7 +118,7 @@ bool CompressLZMAFile(const std::filesystem::path &input, const std::filesystem:
 
     lzma_stream strm = LZMA_STREAM_INIT;
     lzma_options_lzma options;
-    lzma_lzma_preset(&options, LZMA_PRESET_DEFAULT);
+    lzma_lzma_preset(&options, LZMA_PRESET_EXTREME);
     options.dict_size = 16 * 1024 * 1024;
 
     lzma_ret ret = lzma_alone_encoder(&strm, &options);
@@ -136,6 +136,8 @@ bool CompressLZMAFile(const std::filesystem::path &input, const std::filesystem:
     strm.avail_in = 0;
     strm.next_out = outbuf;
     strm.avail_out = buffer_size;
+
+    LOG("This might take a while!");
 
     while (true) {
         if (strm.avail_in == 0 && !fin.eof()) {

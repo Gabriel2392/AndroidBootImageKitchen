@@ -98,7 +98,7 @@ bool DecompressLZMAFile(const std::filesystem::path &input,
     }
 
     lzma_stream strm = LZMA_STREAM_INIT;
-    lzma_ret ret = lzma_alone_decoder(&strm, UINT64_MAX);
+    lzma_ret ret = lzma_alone_decoder(&strm, 20 * 1024 * 1024);
     if (ret != LZMA_OK) {
         LOGE("LZMA: Decoder initialization failed: %d", ret);
         return false;
