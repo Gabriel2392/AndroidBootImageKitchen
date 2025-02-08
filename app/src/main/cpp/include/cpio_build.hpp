@@ -17,7 +17,7 @@
 namespace fs = std::filesystem;
 
 bool BuildCPIO(const std::filesystem::path &input,
-               const std::filesystem::path &output) {
+               const std::filesystem::path &output) noexcept {
   fs::path config_path = input / CONFIG_FILE;
   std::ifstream config(config_path);
   if (!config) {
@@ -31,6 +31,8 @@ bool BuildCPIO(const std::filesystem::path &input,
     return false;
   }
 
+  std::error_code ec;
+  errno = 0;
   std::string line;
   while (std::getline(config, line)) {
     std::map<std::string, std::string> entry;
@@ -70,10 +72,10 @@ bool BuildCPIO(const std::filesystem::path &input,
     std::string path = entry["path"];
     std::string type = entry["type"];
     std::string mode_str = entry["mode"];
-    unsigned long uid = std::stoul(entry["uid"]);
-    unsigned long gid = std::stoul(entry["gid"]);
+    unsigned long uid = std::strtoul(entry["uid"].c_str(), nullptr, 10);
+    unsigned long gid = std::strtoul(entry["gid"].c_str(), nullptr, 10);
 
-    mode_t permissions = static_cast<mode_t>(std::stoul(mode_str, nullptr, 8));
+    auto permissions = static_cast<mode_t>(std::strtoul(mode_str.c_str(), nullptr, 8));
     mode_t file_type = 0;
     unsigned long filesize = 0;
     unsigned long nlink = 1;
@@ -85,11 +87,11 @@ bool BuildCPIO(const std::filesystem::path &input,
     } else if (type == "file") {
       file_type = S_IFREG;
       fs::path file_path = input / path;
-      if (!fs::exists(file_path)) {
+      if (!fs::exists(file_path, ec)) {
         LOGE("File not found: ", file_path.c_str());
         return false;
       }
-      filesize = fs::file_size(file_path);
+      filesize = fs::file_size(file_path, ec);
     } else if (type == "symlink") {
       file_type = S_IFLNK;
       target = entry["target"];
@@ -128,23 +130,23 @@ bool BuildCPIO(const std::filesystem::path &input,
 
     cpio_out.write(header, 110);
 
-    cpio_out.write(path.c_str(), path.size());
+    cpio_out.write(path.c_str(), static_cast<std::streamsize>(path.size()));
     cpio_out.put('\0');
 
     size_t name_pad = (4 - ((110 + namesize) % 4)) % 4;
-    cpio_out.write("\0\0\0", name_pad);
+    cpio_out.write("\0\0\0", static_cast<std::streamsize>(name_pad));
 
     if (type == "file") {
       std::ifstream file(input / path, std::ios::binary);
       std::vector<char> data(filesize);
-      file.read(data.data(), filesize);
-      cpio_out.write(data.data(), filesize);
+      file.read(data.data(), static_cast<std::streamsize>(filesize));
+      cpio_out.write(data.data(), static_cast<std::streamsize>(filesize));
     } else if (type == "symlink") {
-      cpio_out.write(target.c_str(), target.size());
+      cpio_out.write(target.c_str(), static_cast<std::streamsize>(target.size()));
     }
 
     size_t data_pad = (4 - (filesize % 4)) % 4;
-    cpio_out.write("\0\0\0", data_pad);
+    cpio_out.write("\0\0\0", static_cast<std::streamsize>(data_pad));
   }
 
   char trailer_header[110] = {};
@@ -160,11 +162,11 @@ bool BuildCPIO(const std::filesystem::path &input,
 
   write_field(94, trailer_namesize);  // namesize
   cpio_out.write(trailer_header, 110);
-  cpio_out.write(trailer_name.c_str(), trailer_name.size());
+  cpio_out.write(trailer_name.c_str(), static_cast<std::streamsize>(trailer_name.size()));
   cpio_out.put('\0');
 
   size_t trailer_pad = (4 - ((110 + trailer_namesize) % 4)) % 4;
-  cpio_out.write("\0\0\0", trailer_pad);
+  cpio_out.write("\0\0\0", static_cast<std::streamsize>(trailer_pad));
 
   return true;
 }

@@ -19,7 +19,7 @@
 namespace fs = std::filesystem;
 
 bool ExtractCPIO(const std::filesystem::path &input,
-                 const std::filesystem::path &output) {
+                 const std::filesystem::path &output) noexcept {
   std::ifstream in(input.string(), std::ios::binary);
   if (!in) {
     LOGE("Error opening input file: %s", input.string().c_str());
@@ -45,7 +45,6 @@ bool ExtractCPIO(const std::filesystem::path &input,
     std::string magic(header, 6);
     if (magic != "070701") {
       LOGE("Unsupported format");
-      ;
       return false;
     }
 
@@ -80,7 +79,7 @@ bool ExtractCPIO(const std::filesystem::path &input,
 
     fs::path outpath = output / filename;
 
-    fs::create_directories(outpath.parent_path());
+    fs::create_directories(outpath.parent_path(), ec);
 
     mode_t file_mode = mode & 07777;
     mode_t file_type = mode & S_IFMT;
@@ -90,14 +89,13 @@ bool ExtractCPIO(const std::filesystem::path &input,
                   static_cast<unsigned int>(file_mode));
 
     if (file_type == S_IFDIR) {
-      fs::create_directory(outpath);
+      fs::create_directory(outpath, ec);
       config << "path=\"" << filename << "\" type=dir mode=" << mode_str
              << " uid=" << uid << " gid=" << gid << "\n";
     } else if (file_type == S_IFREG) {
       std::ofstream outfile(outpath, std::ios::binary);
       if (!outfile) {
         LOGE("Error creating file: %s", outpath.string().c_str());
-        ;
         return false;
       }
       std::vector<char> filedata(filesize);
@@ -115,7 +113,6 @@ bool ExtractCPIO(const std::filesystem::path &input,
              << "\"\n";
     } else {
       LOGE("Unsupported file type");
-      ;
       in.ignore(static_cast<std::streamsize>(filesize));
     }
 
