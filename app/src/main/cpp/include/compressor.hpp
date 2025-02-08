@@ -6,9 +6,12 @@
 #include "log.h"
 #include "lz4io.h"
 #include "zlib.h"
+#include <thread>
 
 #define POCKETLZMA_LZMA_C_DEFINE
 #include "pocketlzma.hpp"
+
+std::error_code errorc;
 
 bool CompressGzipFile(const std::filesystem::path &input,
                       const std::filesystem::path &tmp) {
@@ -68,8 +71,7 @@ bool CompressGzipFile(const std::filesystem::path &input,
     std::filesystem::rename(tmp, input);
   } catch (const std::filesystem::filesystem_error &e) {
     LOGE("gzip: File replacement failed: %s", e.what());
-    std::error_code ec;
-    std::filesystem::remove(tmp, ec);
+    std::filesystem::remove(tmp, errorc);
     return false;
   }
 
@@ -84,6 +86,7 @@ bool CompressLZ4File(const std::filesystem::path &input,
     return false;
   }
   LZ4IO_setOverwrite(prefs, 1);
+  LZ4IO_setNbWorkers(prefs, static_cast<int>(std::thread::hardware_concurrency()));
   int result = LZ4IO_compressFilename_Legacy(input.string().c_str(),
                                              tmp.string().c_str(), 12, prefs);
   LZ4IO_freePreferences(prefs);
@@ -96,8 +99,7 @@ bool CompressLZ4File(const std::filesystem::path &input,
     std::filesystem::rename(tmp, input);
   } catch (const std::filesystem::filesystem_error &e) {
     LOGE("LZ4: File replacement failed: %s", e.what());
-    std::error_code ec;
-    std::filesystem::remove(tmp, ec);
+    std::filesystem::remove(tmp, errorc);
     return false;
   }
   return true;
@@ -133,8 +135,7 @@ bool CompressLZMAFile(const std::filesystem::path &input,
     std::filesystem::rename(tmp, input);
   } catch (const std::filesystem::filesystem_error &e) {
     LOGE("LZMA: File replacement failed: %s", e.what());
-    std::error_code ec;
-    std::filesystem::remove(tmp, ec);
+    std::filesystem::remove(tmp, errorc);
     return false;
   }
   return true;
