@@ -30,8 +30,16 @@ add_library(abik SHARED
         mkbootimg/vendorbootimg.cc
 )
 
+add_library(lzma SHARED IMPORTED)
+set_target_properties(
+        lzma
+        PROPERTIES IMPORTED_LOCATION
+        "${CMAKE_SOURCE_DIR}/../jniLibs/${ANDROID_ABI}/liblzma.so"
+)
+
 target_include_directories(abik PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/liblz4)
 
 target_link_libraries(abik PRIVATE log)
 target_link_libraries(abik PRIVATE lz4)
 target_link_libraries(abik PRIVATE z)
+target_link_libraries(abik PRIVATE lzma)

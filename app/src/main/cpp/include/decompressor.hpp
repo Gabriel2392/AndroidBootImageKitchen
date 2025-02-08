@@ -7,9 +7,6 @@
 #include "lz4io.h"
 #include "zlib.h"
 
-#define POCKETLZMA_LZMA_C_DEFINE
-#include "pocketlzma.hpp"
-
 bool DecompressGzipFile(const std::filesystem::path &input,
                         const std::filesystem::path &output) {
   constexpr size_t bufferSize = 8192;
@@ -88,28 +85,82 @@ bool DecompressLZ4File(const std::filesystem::path &input,
 
 bool DecompressLZMAFile(const std::filesystem::path &input,
                         const std::filesystem::path &output) {
-  std::vector<uint8_t> data;
-  std::vector<uint8_t> decompressedData;
-  plz::FileStatus fileStatus = plz::File::FromFile(input.string(), data);
-
-  if (fileStatus.status() == plz::FileStatus::Code::Ok) {
-    plz::PocketLzma p;
-    plz::StatusCode status = p.decompress(data, decompressedData);
-    if (status == plz::StatusCode::Ok) {
-      plz::FileStatus writeStatus =
-          plz::File::ToFile(output.string(), decompressedData);
-      if (writeStatus.status() == plz::FileStatus::Code::Ok) {
-        try {
-          std::filesystem::remove_all(input);
-        } catch (const std::filesystem::filesystem_error &e) {
-          LOGE("LZMA: File removal failed: %s", e.what());
-          return false;
-        }
-        return true;
-      }
+    std::ifstream inFile(input, std::ios::binary);
+    if (!inFile) {
+        LOGE("LZMA: Error opening input file");
+        return false;
     }
-  }
 
-  LOGE("LZMA: Error decompressing!");
-  return false;
+    lzma_stream strm = LZMA_STREAM_INIT;
+    lzma_ret ret = lzma_alone_decoder(&strm, UINT64_MAX);
+    if (ret != LZMA_OK) {
+        LOGE("LZMA: Decoder initialization failed: %d", ret);
+        return false;
+    }
+
+    std::ofstream outFile(output, std::ios::binary);
+    if (!outFile) {
+        LOGE("LZMA: Error opening output file");
+        lzma_end(&strm);
+        return false;
+    }
+
+    constexpr size_t IN_BUFSIZE = 65536;
+    uint8_t inBuf[IN_BUFSIZE];
+    bool input_eof = false;
+
+    constexpr size_t OUT_BUFSIZE = 65536;
+    uint8_t outBuf[OUT_BUFSIZE];
+
+    do {
+        if (strm.avail_in == 0 && !input_eof) {
+            inFile.read(reinterpret_cast<char*>(inBuf), IN_BUFSIZE);
+            std::streamsize bytesRead = inFile.gcount();
+            if (bytesRead > 0) {
+                strm.next_in = inBuf;
+                strm.avail_in = bytesRead;
+            } else {
+                input_eof = true;
+            }
+        }
+
+        strm.next_out = outBuf;
+        strm.avail_out = OUT_BUFSIZE;
+
+        ret = lzma_code(&strm, LZMA_RUN);
+
+        if (ret != LZMA_OK && ret != LZMA_STREAM_END) {
+            LOGE("LZMA: Decompression error: %d", ret);
+            break;
+        }
+
+        size_t decompressedBytes = OUT_BUFSIZE - strm.avail_out;
+        if (decompressedBytes > 0) {
+            if (!outFile.write(reinterpret_cast<const char*>(outBuf), static_cast<std::streamsize>(decompressedBytes))) {
+                LOGE("LZMA: Error writing to output file");
+                ret = LZMA_DATA_ERROR;
+                break;
+            }
+        }
+    } while (ret != LZMA_STREAM_END);
+
+    lzma_end(&strm);
+
+    if (ret != LZMA_STREAM_END) {
+        outFile.close();
+        std::error_code ec;
+        std::filesystem::remove(output, ec);
+        return false;
+    }
+
+    outFile.close();
+
+    try {
+        std::filesystem::remove(input);
+    } catch (const std::filesystem::filesystem_error &e) {
+        LOGE("LZMA: File removal failed: %s", e.what());
+        return false;
+    }
+
+    return true;
 }

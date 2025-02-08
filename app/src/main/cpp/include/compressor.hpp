@@ -6,10 +6,8 @@
 #include "log.h"
 #include "lz4io.h"
 #include "zlib.h"
+#include "lzma/lzma.h"
 #include <thread>
-
-#define POCKETLZMA_LZMA_C_DEFINE
-#include "pocketlzma.hpp"
 
 std::error_code errorc;
 
@@ -105,38 +103,85 @@ bool CompressLZ4File(const std::filesystem::path &input,
   return true;
 }
 
-bool CompressLZMAFile(const std::filesystem::path &input,
-                      const std::filesystem::path &tmp) {
-  std::vector<uint8_t> data;
-  std::vector<uint8_t> compressedData;
-  plz::FileStatus fileStatus = plz::File::FromFile(input.string(), data);
+bool CompressLZMAFile(const std::filesystem::path &input, const std::filesystem::path &tmp) {
+    std::ifstream fin(input, std::ios::binary | std::ios::ate);
+    if (!fin) {
+        return false;
+    }
+    fin.seekg(0);
 
-  if (fileStatus.status() != plz::FileStatus::Code::Ok) {
-    LOGE("LZMA: Error reading input file: %s", input.string().c_str());
-    return false;
-  }
+    std::ofstream fout(tmp, std::ios::binary);
+    if (!fout) {
+        fin.close();
+        return false;
+    }
 
-  plz::PocketLzma p;
-  p.usePreset(plz::Preset::BestCompression);
-  plz::StatusCode status = p.compress(data, compressedData);
-  if (status != plz::StatusCode::Ok) {
-    LOGE("LZMA: Error compressing data");
-    return false;
-  }
+    lzma_stream strm = LZMA_STREAM_INIT;
+    lzma_options_lzma options;
+    lzma_lzma_preset(&options, LZMA_PRESET_DEFAULT);
+    options.dict_size = 16 * 1024 * 1024;
 
-  plz::FileStatus writeStatus = plz::File::ToFile(tmp.string(), compressedData);
-  if (writeStatus.status() != plz::FileStatus::Code::Ok) {
-    LOGE("LZMA: Error writing compressed data to output file: %s",
-         tmp.string().c_str());
-    return false;
-  }
+    lzma_ret ret = lzma_alone_encoder(&strm, &options);
+    if (ret != LZMA_OK) {
+        fin.close();
+        fout.close();
+        return false;
+    }
 
-  try {
-    std::filesystem::rename(tmp, input);
-  } catch (const std::filesystem::filesystem_error &e) {
-    LOGE("LZMA: File replacement failed: %s", e.what());
-    std::filesystem::remove(tmp, errorc);
-    return false;
-  }
-  return true;
+    const size_t buffer_size = 65536;
+    uint8_t inbuf[buffer_size];
+    uint8_t outbuf[buffer_size];
+    bool success = true;
+
+    strm.avail_in = 0;
+    strm.next_out = outbuf;
+    strm.avail_out = buffer_size;
+
+    while (true) {
+        if (strm.avail_in == 0 && !fin.eof()) {
+            fin.read(reinterpret_cast<char*>(inbuf), buffer_size);
+            if (!fin && !fin.eof()) {
+                success = false;
+                break;
+            }
+            strm.avail_in = fin.gcount();
+            strm.next_in = inbuf;
+        }
+
+        ret = lzma_code(&strm, fin.eof() ? LZMA_FINISH : LZMA_RUN);
+
+        if (strm.avail_out == 0 || ret == LZMA_STREAM_END) {
+            size_t write_size = buffer_size - strm.avail_out;
+            if (!fout.write(reinterpret_cast<char*>(outbuf), static_cast<std::streamsize>(write_size))) {
+                success = false;
+                break;
+            }
+            strm.next_out = outbuf;
+            strm.avail_out = buffer_size;
+        }
+
+        if (ret == LZMA_STREAM_END) break;
+        if (ret != LZMA_OK) {
+            success = false;
+            break;
+        }
+    }
+
+    lzma_end(&strm);
+    fin.close();
+    fout.close();
+
+    if (!success) {
+        std::filesystem::remove(tmp);
+        return false;
+    }
+
+    try {
+        std::filesystem::rename(tmp, input);
+    } catch (...) {
+        std::filesystem::remove(tmp);
+        return false;
+    }
+
+    return true;
 }
