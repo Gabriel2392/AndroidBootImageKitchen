@@ -18,7 +18,7 @@ std::optional<VendorBootImageInfo> UnpackVendorBootImage(
     int fd, const std::filesystem::path &output_dir, bool dec_ramdisk) {
   VendorBootImageInfo info;
 
-  LOG("Working at: %s", output_dir.c_str());
+  LOG("Working at: %s", output_dir.filename().c_str());
 
   // Read header fields
   if (!(utils::ReadString(fd, 8, info.boot_magic) &&
