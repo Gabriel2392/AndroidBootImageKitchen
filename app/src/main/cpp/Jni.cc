@@ -351,7 +351,7 @@ bool unpackbootimg_wrapper(int fd, const std::string &workdir,
 extern "C" JNIEXPORT jboolean JNICALL Java_com_oops_abik_ABIKBridge_jniExtract(
     JNIEnv *env, jobject, jint input_fd, jstring input_name, jstring dir,
     jboolean extract_ramdisk) {
-  initializeJNIReferences(env);
+  initializeJNIReferences(env, LEVEL_EXTRACT);
 
   std::string directory = ReadString(env, dir);
   std::string input = ReadString(env, input_name);
@@ -379,7 +379,6 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_oops_abik_ABIKBridge_jniExtract(
   if (!ret) fs::remove_all(workdir, ec);
 
   LOG(ret ? "Done in %.1fs!" : "Failed in %.1fs!", elapsed.count());
-  LOG("");
 
   releaseJNIReferences();
   return ret;
@@ -387,7 +386,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_oops_abik_ABIKBridge_jniExtract(
 
 extern "C" JNIEXPORT jboolean JNICALL Java_com_oops_abik_ABIKBridge_jniBuild(
     JNIEnv *env, jobject, jstring input_dir) {
-  initializeJNIReferences(env);
+  initializeJNIReferences(env, LEVEL_BUILD);
 
   std::string input = ReadString(env, input_dir);
   if (input.empty()) {
@@ -398,7 +397,6 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_oops_abik_ABIKBridge_jniBuild(
   auto [ret, elapsed] = measure(mkbootimg_wrapper, input);
 
   LOG(ret ? "Done in %.1fs!" : "Failed in %.1fs!", elapsed.count());
-  LOG("");
 
   releaseJNIReferences();
   return ret;

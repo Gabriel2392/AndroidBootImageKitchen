@@ -13,8 +13,9 @@
 JNIEnv *savedEnv = nullptr;
 jclass dataHelperClass = nullptr;
 jmethodID updateConsoleTextMethod = nullptr;
+std::string CURRENT_LEVEL = std::string(LEVEL_INFO);
 
-void initializeJNIReferences(JNIEnv *env) {
+void initializeJNIReferences(JNIEnv *env, const std::string_view &level) {
   savedEnv = env;
 
   dataHelperClass = env->FindClass("com/oops/abik/DataHelper");
@@ -30,6 +31,8 @@ void initializeJNIReferences(JNIEnv *env) {
     env->DeleteLocalRef(dataHelperClass);
     dataHelperClass = nullptr;
   }
+
+  CURRENT_LEVEL = level;
 }
 
 void releaseJNIReferences() {
@@ -39,6 +42,7 @@ void releaseJNIReferences() {
   savedEnv = nullptr;
   dataHelperClass = nullptr;
   updateConsoleTextMethod = nullptr;
+  CURRENT_LEVEL = LEVEL_INFO;
 }
 
 void logConsole(const char *message) {

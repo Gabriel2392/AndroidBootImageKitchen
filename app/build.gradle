@@ -13,7 +13,7 @@ android {
         //noinspection OldTargetApi
         targetSdk 35
         versionCode 100
-        versionName "1.0.0-beta7"
+        versionName "1.0.0-beta8"
         ndkVersion "28.0.13004108"
 
         externalNativeBuild {

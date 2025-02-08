@@ -31,6 +31,10 @@ bool CompressGzipFile(const std::filesystem::path &input,
 
   gzsetparams(gzOutput, Z_BEST_COMPRESSION, Z_DEFAULT_STRATEGY);
 
+  if (std::filesystem::file_size(input, errorc) > 10 * 1024 * 1024) {
+      LOG("This might take a while!");
+  }
+
   while (inFile.read(buffer, bufferSize)) {
     int bytesRead = static_cast<int>(inFile.gcount());
     if (gzwrite(gzOutput, buffer, bytesRead) != bytesRead) {
@@ -82,6 +86,9 @@ bool CompressLZ4File(const std::filesystem::path &input,
   if (!prefs) {
     LOGE("LZ4: Error creating preferences");
     return false;
+  }
+  if (std::filesystem::file_size(input, errorc) > 10 * 1024 * 1024) {
+      LOG("This might take a while!");
   }
   LZ4IO_setOverwrite(prefs, 1);
   LZ4IO_setNbWorkers(prefs, static_cast<int>(std::thread::hardware_concurrency()));
@@ -137,7 +144,9 @@ bool CompressLZMAFile(const std::filesystem::path &input, const std::filesystem:
     strm.next_out = outbuf;
     strm.avail_out = buffer_size;
 
-    LOG("This might take a while!");
+    if (std::filesystem::file_size(input, errorc) > 10 * 1024 * 1024) {
+        LOG("This might take a while!");
+    }
 
     while (true) {
         if (strm.avail_in == 0 && !fin.eof()) {
