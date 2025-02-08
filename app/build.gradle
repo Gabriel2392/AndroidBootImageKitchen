@@ -13,7 +13,7 @@ android {
         //noinspection OldTargetApi
         targetSdk 35
         versionCode 100
-        versionName "1.0.0-beta2"
+        versionName "1.0.0-beta4"
         ndkVersion "28.0.13004108"
 
         externalNativeBuild {
@@ -44,6 +44,7 @@ android {
             jniDebuggable false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             buildTypes { release { signingConfig signingConfigs.config } }
+            multiDexEnabled true
         }
     }
     externalNativeBuild {
@@ -52,11 +53,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_19
+        targetCompatibility JavaVersion.VERSION_19
     }
     kotlinOptions {
-        jvmTarget = '17'
+        jvmTarget = '19'
     }
     packagingOptions {
         jniLibs {
