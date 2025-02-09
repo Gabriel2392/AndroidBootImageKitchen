@@ -69,7 +69,7 @@ bool BuildRamdisk(fs::path &ramdisk_in, fs::path &ramdisk_out,
       if (!CompressLZMAFile(ramdisk_out, ramdisk_tmp)) {
         return false;
       }
-    } else {
+    } else if (compression_method == FORMAT_OTHER) {
       LOG("Compression method is unknown!");
       LOG("%s will be kept uncompressed!", ramdisk_in.filename().c_str());
     }
@@ -97,10 +97,12 @@ bool UnpackRamdisk(fs::path &ramdisk_in, uint8_t compression_method) {
     if (!DecompressLZMAFile(ramdisk_in, ramdisk_tmp)) {
       return false;
     }
-  } else {
+  } else if (compression_method == FORMAT_OTHER) {
     LOG("Compression method is unknown!");
     LOG("%s will be kept compressed!", ramdisk_in.filename().c_str());
     return true;
+  } else {
+      fs::rename(ramdisk_in, ramdisk_tmp,ec);
   }
   LOG("Decompressing %s using cpio", ramdisk_in.filename().c_str());
   if (!ExtractCPIO(ramdisk_tmp, ramdisk_in)) {
