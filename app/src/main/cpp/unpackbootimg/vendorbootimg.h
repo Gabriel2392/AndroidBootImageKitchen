@@ -32,6 +32,7 @@ struct VendorBootImageInfo {
   uint32_t header_size = 0;
   uint32_t dtb_size = 0;
   uint64_t dtb_load_address = 0;
+  uint8_t ramdisk_compression = FORMAT_OTHER;
 
   // Version >3 fields
   uint32_t vendor_ramdisk_table_size = 0;

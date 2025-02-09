@@ -25,6 +25,7 @@ class VendorBootConfig {
     WriteU32(file, info.header_size);
     WriteU32(file, info.dtb_size);
     WriteU64(file, info.dtb_load_address);
+    WriteU8(file, info.ramdisk_compression);
 
     // Version >3 fields
     WriteU32(file, info.vendor_ramdisk_table_size);
@@ -78,6 +79,7 @@ class VendorBootConfig {
     ReadU32(file, info.header_size);
     ReadU32(file, info.dtb_size);
     ReadU64(file, info.dtb_load_address);
+    ReadU8(file, info.ramdisk_compression);
 
     // Version >3 fields
     ReadU32(file, info.vendor_ramdisk_table_size);

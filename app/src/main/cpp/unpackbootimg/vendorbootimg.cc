@@ -123,6 +123,16 @@ std::optional<VendorBootImageInfo> UnpackVendorBootImage(
     image_entries.emplace_back(bootconfig_offset, info.vendor_bootconfig_size,
                                "bootconfig");
   } else {
+    info.ramdisk_compression = FORMAT_OTHER;
+
+    if (dec_ramdisk) {
+        auto buf = utils::ReadNBytesAtOffsetX(fd, ramdisk_offset_base, 16);
+        if (buf.empty()) {
+            LOGE("Could not read vendor_ramdisk");
+            return std::nullopt;
+        }
+        info.ramdisk_compression = getHeaderFormat(buf.data(), buf.size());
+    }
     image_entries.emplace_back(ramdisk_offset_base, info.vendor_ramdisk_size,
                                "vendor_ramdisk");
   }

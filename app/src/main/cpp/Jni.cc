@@ -232,10 +232,18 @@ bool mkbootimg_wrapper(const std::string &workdir) {
     LOG("boot magic: %s", s_vendor_boot_magic.c_str());
     VendorBootImageInfo info;
     VendorBootConfig::Read(info, config_file.string());
-    for (const auto &i : info.vendor_ramdisk_table) {
-      auto ramdisk = fs::path(workdir) / fs::path(i.output_name);
+    if (info.header_version > 3) {
+      for (const auto &i: info.vendor_ramdisk_table) {
+        auto ramdisk = fs::path(workdir) / fs::path(i.output_name);
+        auto ramdisk_build = fs::path(ramdisk.string() + ".build");
+        if (!BuildRamdisk(ramdisk, ramdisk_build, i.ramdisk_compression)) {
+            return false;
+        }
+      }
+    } else {
+      auto ramdisk = fs::path(workdir) / fs::path("vendor_ramdisk");
       auto ramdisk_build = fs::path(ramdisk.string() + ".build");
-      if (!BuildRamdisk(ramdisk, ramdisk_build, i.ramdisk_compression)) {
+      if (!BuildRamdisk(ramdisk, ramdisk_build, info.ramdisk_compression)) {
         return false;
       }
     }
@@ -257,16 +265,20 @@ bool mkbootimg_wrapper(const std::string &workdir) {
     }
     args.vendor_cmdline = info.cmdline;
     std::vector<VendorRamdiskEntry> rds;
-    for (const auto &i : info.vendor_ramdisk_table) {
-      VendorRamdiskEntry entry;
-      auto ramdisk_build =
-          fs::path(fs::path(workdir) / fs::path(i.output_name + ".build"));
-      entry.path = fs::is_regular_file(ramdisk_build)
-                       ? ramdisk_build
-                       : fs::path(workdir) / i.output_name;
-      entry.type = i.type;
-      entry.name = i.name;
-      rds.push_back(entry);
+    if (info.header_version > 3) {
+        for (const auto &i: info.vendor_ramdisk_table) {
+            VendorRamdiskEntry entry;
+            auto ramdisk_build =
+                    fs::path(fs::path(workdir) / fs::path(i.output_name + ".build"));
+            entry.path = fs::is_regular_file(ramdisk_build)
+                    ? ramdisk_build
+                    : fs::path(workdir) / i.output_name;
+            entry.type = i.type;
+            entry.name = i.name;
+            rds.push_back(entry);
+        }
+    } else {
+        args.vendor_ramdisk = fs::path(workdir) / fs::path("vendor_ramdisk.build");
     }
     args.ramdisks = rds;
     args.output = fs::path(workdir) / fs::path("vendor_boot-new");
@@ -337,11 +349,18 @@ bool unpackbootimg_wrapper(int fd, const std::string &workdir,
       return false;
     }
   } else if (vendor_boot_info && dec_ramdisk) {
-    for (const auto &i : vendor_boot_info->vendor_ramdisk_table) {
-      if (i.ramdisk_compression == FORMAT_OTHER) continue;
-      fs::path ramdisk_in = fs::path(workdir) / i.output_name;
-      if (!UnpackRamdisk(ramdisk_in, i.ramdisk_compression)) {
-        return false;
+    if (vendor_boot_info->header_version > 3) {
+        for (const auto &i: vendor_boot_info->vendor_ramdisk_table) {
+            if (i.ramdisk_compression == FORMAT_OTHER) continue;
+            fs::path ramdisk_in = fs::path(workdir) / i.output_name;
+            if (!UnpackRamdisk(ramdisk_in, i.ramdisk_compression)) {
+                return false;
+            }
+        }
+    } else if (vendor_boot_info->ramdisk_compression != FORMAT_OTHER) {
+      fs::path ramdisk_in = fs::path(workdir) / "vendor_ramdisk";
+      if (!UnpackRamdisk(ramdisk_in, vendor_boot_info->ramdisk_compression)) {
+          return false;
       }
     }
   }
