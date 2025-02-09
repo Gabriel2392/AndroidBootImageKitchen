@@ -12,8 +12,8 @@ android {
         minSdk 30
         //noinspection OldTargetApi
         targetSdk 35
-        versionCode 100
-        versionName "1.0.0-stable"
+        versionCode 101
+        versionName "1.0.1-stable"
         ndkVersion "28.0.13004108"
 
         externalNativeBuild {

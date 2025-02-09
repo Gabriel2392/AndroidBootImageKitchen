@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fno-rtti -g0 -O3")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fno-rtti -g0 -O3 -DLZ4IO_MULTITHREAD=1 -DLZ4_CLEVEL_DEFAULT=12")
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
 
 add_library(lz4 SHARED
