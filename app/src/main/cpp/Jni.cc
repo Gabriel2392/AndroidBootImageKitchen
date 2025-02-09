@@ -258,9 +258,7 @@ bool mkbootimg_wrapper(const std::string &workdir) {
             if (!BuildRamdisk(ramdisk, ramdisk_build, i.ramdisk_compression)) {
                 return false;
             }
-            entry.path = fs::is_regular_file(ramdisk_build)
-                    ? ramdisk_build
-                    : fs::path(workdir) / i.output_name;
+            entry.path = ramdisk_build;
             entry.type = i.type;
             entry.name = i.name;
             rds.push_back(entry);
