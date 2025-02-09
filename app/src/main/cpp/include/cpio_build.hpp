@@ -89,7 +89,7 @@ bool BuildCPIO(const std::filesystem::path &input,
       file_type = S_IFREG;
       fs::path file_path = input / path;
       if (!fs::exists(file_path, ec)) {
-        LOGE("File not found: ", file_path.c_str());
+        LOGE("File not found: %s", path.c_str());
         return false;
       }
       filesize = fs::file_size(file_path, ec);
