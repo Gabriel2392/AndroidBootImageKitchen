@@ -232,21 +232,6 @@ bool mkbootimg_wrapper(const std::string &workdir) {
     LOG("boot magic: %s", s_vendor_boot_magic.c_str());
     VendorBootImageInfo info;
     VendorBootConfig::Read(info, config_file.string());
-    if (info.header_version > 3) {
-      for (const auto &i: info.vendor_ramdisk_table) {
-        auto ramdisk = fs::path(workdir) / fs::path(i.output_name);
-        auto ramdisk_build = fs::path(ramdisk.string() + ".build");
-        if (!BuildRamdisk(ramdisk, ramdisk_build, i.ramdisk_compression)) {
-            return false;
-        }
-      }
-    } else {
-      auto ramdisk = fs::path(workdir) / fs::path("vendor_ramdisk");
-      auto ramdisk_build = fs::path(ramdisk.string() + ".build");
-      if (!BuildRamdisk(ramdisk, ramdisk_build, info.ramdisk_compression)) {
-        return false;
-      }
-    }
     VendorBootArgs args;
     if (info.dtb_size > 0) {
       args.dtb = fs::path(fs::path(workdir) / "dtb");
@@ -268,8 +253,11 @@ bool mkbootimg_wrapper(const std::string &workdir) {
     if (info.header_version > 3) {
         for (const auto &i: info.vendor_ramdisk_table) {
             VendorRamdiskEntry entry;
-            auto ramdisk_build =
-                    fs::path(fs::path(workdir) / fs::path(i.output_name + ".build"));
+            auto ramdisk = fs::path(workdir) / fs::path(i.output_name);
+            auto ramdisk_build = fs::path(ramdisk.string() + ".build");
+            if (!BuildRamdisk(ramdisk, ramdisk_build, i.ramdisk_compression)) {
+                return false;
+            }
             entry.path = fs::is_regular_file(ramdisk_build)
                     ? ramdisk_build
                     : fs::path(workdir) / i.output_name;
@@ -278,7 +266,12 @@ bool mkbootimg_wrapper(const std::string &workdir) {
             rds.push_back(entry);
         }
     } else {
-        args.vendor_ramdisk = fs::path(workdir) / fs::path("vendor_ramdisk.build");
+        auto ramdisk = fs::path(workdir) / fs::path("vendor_ramdisk");
+        auto ramdisk_build = fs::path(ramdisk.string() + ".build");
+        if (!BuildRamdisk(ramdisk, ramdisk_build, info.ramdisk_compression)) {
+            return false;
+        }
+        args.vendor_ramdisk = ramdisk_build;
     }
     args.ramdisks = rds;
     args.output = fs::path(workdir) / fs::path("vendor_boot-new");
