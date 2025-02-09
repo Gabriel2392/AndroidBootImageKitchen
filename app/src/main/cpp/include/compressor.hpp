@@ -190,7 +190,7 @@ bool CompressLZMAFile(const std::filesystem::path &input, const std::filesystem:
     try {
         std::filesystem::rename(tmp, input);
     } catch (...) {
-        std::filesystem::remove(tmp);
+        std::filesystem::remove(tmp, errorc);
         return false;
     }
 
